@@ -1,9 +1,7 @@
 package com.example.youtubetto
 
 import android.os.Bundle
-import android.widget.Button
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
@@ -15,9 +13,6 @@ import com.google.android.youtube.player.YouTubePlayer
 import com.google.android.youtube.player.YouTubePlayerView
 import org.json.JSONArray
 import org.json.JSONObject
-
-
-
 
 class MainActivity : YouTubeBaseActivity() {
     private val video_id = "IGQBtbKSVhY"
@@ -38,9 +33,9 @@ class MainActivity : YouTubeBaseActivity() {
         youtubePlayer = findViewById(R.id.youtubePlayer)
         btnPlayer = findViewById(R.id.btnPlay)
         val textView = findViewById<TextView>(R.id.text)
-        textView.text = "birb"
 
-        // Instantiate the RequestQueue.
+        val listview : ListView = findViewById(R.id.videos_list);
+
         val queue = Volley.newRequestQueue(this)
         val url = "https://www.googleapis.com/youtube/v3/playlists?key=${youtube_api_key}&channelId=${channel_id}"
 
@@ -50,17 +45,25 @@ class MainActivity : YouTubeBaseActivity() {
                 val items : JSONArray = response.getJSONArray("items")
 
                 val playlistId : String = items.getJSONObject(0).getString("id")
+                textView.text = "Filmy z playlisty " + playlistId
 
                 val jsonObjectRequestVideos = JsonObjectRequest(
                     Request.Method.GET, "https://www.googleapis.com/youtube/v3/playlistItems?key=${youtube_api_key}&playlistId=${playlistId}&part=snippet", null,
                     { response ->
                         val items : JSONArray = response.getJSONArray("items")
 
-//                        textView.text = "${playlistId}"
-                        val snippet : JSONObject = items.getJSONObject(0).getJSONObject("snippet")
-                        val title : String = snippet.getString("title")
-                        textView.text = title
-//                        val videoId : String = snippet.getString("videoId")
+                        val video_titles = arrayOfNulls<String>(items.length())
+                        for (i in 0 until items.length()) {
+                            val snippet : JSONObject = items.getJSONObject(i).getJSONObject("snippet")
+                            val title : String = snippet.getString("title")
+                            video_titles[i] = title
+                        }
+
+                        val adapter = ArrayAdapter(
+                            this,
+                            android.R.layout.simple_list_item_1, video_titles
+                        )
+                        listview.adapter = adapter
                     },
                     { textView.text = "That didn't work!" })
 
