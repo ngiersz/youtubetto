@@ -6,31 +6,15 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <com.google.android.youtube.player.YouTubePlayerView
-        android:id="@+id/youtubePlayer"
-        android:focusable="true"
-        android:layout_width="match_parent"
-        android:layout_height="250dp"
-        />
-
-    <Button
-        android:id="@+id/btnPlay"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Play video"
-        android:textAllCaps="false"
-        android:layout_marginTop="300dp"/>
-
     <TextView
         android:id="@+id/text"
         android:text="test"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="400dp" />
+        android:layout_height="wrap_content" />
 
     <ListView xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/videos_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="500dp" />
+        android:layout_marginTop="50dp" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
