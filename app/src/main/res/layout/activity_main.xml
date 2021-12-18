@@ -21,4 +21,15 @@
         android:textAllCaps="false"
         android:layout_marginTop="300dp"/>
 
+    <TextView
+        android:id="@+id/text"
+        android:text="test"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="400dp" />
+
+    <ListView
+        android:id="@+id/videos_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
