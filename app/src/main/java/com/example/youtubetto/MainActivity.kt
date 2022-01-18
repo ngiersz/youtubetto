@@ -1,20 +1,16 @@
 package com.example.youtubetto
 
-import android.content.ClipData.newIntent
+import android.content.Intent
 import android.os.Bundle
 import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.Request
-import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.google.android.youtube.player.YouTubeBaseActivity
-import com.google.android.youtube.player.YouTubePlayer
-import com.google.android.youtube.player.YouTubePlayerView
 import org.json.JSONArray
 import org.json.JSONObject
 
-class MainActivity : YouTubeBaseActivity() {
+class MainActivity : AppCompatActivity() {
     private val channel_id = "UC9jAyy-X65QOVZpyGu9AKHw"
 
     private var youtube_api_key: String = BuildConfig.YOUTUBE_API_KEY
@@ -24,12 +20,19 @@ class MainActivity : YouTubeBaseActivity() {
 
         setContentView(R.layout.activity_main)
 
+        val buttonView = findViewById<Button>(R.id.go_to_sign_in_button)
+
         val textView = findViewById<TextView>(R.id.text)
 
         val listView : ListView = findViewById(R.id.videos_list);
 
         val queue = Volley.newRequestQueue(this)
         val url = "https://www.googleapis.com/youtube/v3/playlists?key=${youtube_api_key}&channelId=${channel_id}&part=snippet"
+
+        buttonView.setOnClickListener {_ ->
+            val signInIntent = GoogleSignInActivity.newIntent(this)
+            startActivity(signInIntent)
+        }
 
         val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET, url, null,

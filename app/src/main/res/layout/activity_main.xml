@@ -6,15 +6,23 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/go_to_sign_in_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sign in" />
+
     <TextView
         android:id="@+id/text"
-        android:text="test"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <ListView xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/videos_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="50dp" />
+        android:text="test"
+        android:layout_marginTop="150dp"/>
+
+    <ListView
+        android:id="@+id/videos_list"
+        android:layout_width="match_parent"
+        android:layout_height="376dp"
+        android:layout_marginTop="250dp" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

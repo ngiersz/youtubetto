@@ -18,8 +18,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Youtubetto">
         <activity
-            android:name=".VideoActivity"
+            android:name=".GoogleSignInActivity"
             android:exported="true" />
+        <activity
+            android:name=".VideoActivity"
+            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
