@@ -18,6 +18,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Youtubetto">
         <activity
+            android:name=".SubscriptionsActivity"
+            android:exported="true"
+            android:label="@string/title_activity_subscriptions"
+            android:theme="@style/Theme.Youtubetto.NoActionBar" />
+        <activity
             android:name=".GoogleSignInActivity"
             android:exported="true" />
         <activity

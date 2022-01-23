@@ -6,6 +6,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +25,7 @@ public class DatabaseFirebase {
         userInsert.put("googleId", user.getGoogleId());
         userInsert.put("googleEmail", user.getEmail());
         userInsert.put("name", user.getName());
+        userInsert.put("idToken", user.getIdToken());
 
         db.collection("Users").document(user.getGoogleId())
                 .set(userInsert)
@@ -42,7 +44,7 @@ public class DatabaseFirebase {
                 });
     }
 
-    public Task getUser(String googleId){
+    public Task<QuerySnapshot> getUser(String googleId){
         return db.collection("Users")
                 .whereEqualTo("googleId", googleId)
                 .get();

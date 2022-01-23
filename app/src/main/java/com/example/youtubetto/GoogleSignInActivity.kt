@@ -15,20 +15,15 @@ import com.google.android.gms.common.SignInButton
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.android.gms.common.api.ApiException
-import com.google.android.material.snackbar.Snackbar
 
 import com.google.android.gms.tasks.OnCompleteListener
 
-import com.google.firebase.auth.FirebaseUser
-
-import com.google.firebase.auth.AuthResult
-
-import android.annotation.SuppressLint
 import android.util.Log
 
 import com.google.firebase.auth.GoogleAuthProvider
 
-import com.google.firebase.auth.AuthCredential
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 
 
 class GoogleSignInActivity : AppCompatActivity() {
@@ -39,6 +34,7 @@ class GoogleSignInActivity : AppCompatActivity() {
     private var mAuth: FirebaseAuth? = null
     private val user: User? = null
     private val br: BroadcastReceiver? = null
+    private lateinit var auth: FirebaseAuth
 
     companion object {
         fun newIntent(context: Context): Intent {
@@ -61,11 +57,14 @@ class GoogleSignInActivity : AppCompatActivity() {
             }
         );
         mAuth = FirebaseAuth.getInstance()
+        auth = Firebase.auth
+
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
         // Configure sign-in to request the user's ID, email address, and basic
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken("584397805155-4koltlu6c3oovqhtm41nbbveaua9h11s.apps.googleusercontent.com")
 //            .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
@@ -79,8 +78,18 @@ class GoogleSignInActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
 
         // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
-            val task: Task<GoogleSignInAccount> = GoogleSignIn.getSignedInAccountFromIntent(data)
-            handleSignInResult(task)
+        if (requestCode == RC_SIGN_IN) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+            try {
+                // Google Sign In was successful, authenticate with Firebase
+                val account = task.getResult(ApiException::class.java)
+                Log.d("", "firebaseAuthWithGoogle:" + account.id)
+                handleSignInResult(task)
+            } catch (e: ApiException) {
+                // Google Sign In failed, update UI appropriately
+                Log.w("", "Google sign in failed", e)
+            }
+        }
     }
 
     private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
@@ -91,15 +100,14 @@ class GoogleSignInActivity : AppCompatActivity() {
 
             // Signed in successfully, show authenticated UI.
 //            updateUI(account)
-//            firebaseAuthWithGoogle(account);
+            firebaseAuthWithGoogle(account);
 
             textView.text = account.email + " " + account.displayName
 
-            Log.d("", account.id!!);
-            Log.d("", account.email!!);
-            Log.d("", account.displayName!!);
+            Log.d("", account.idToken!!);
+//            Log.d("", account.serverAuthCode!!);
 
-            val user = User(googleId = account.id, email = account.email, name = account.displayName)
+            val user = User(googleId = account.id, email = account.email, name = account.displayName, idToken = account.idToken)
             Log.d("", user.email!!);
             val db = DatabaseFirebase()
             db.insertUserToDatabase(user)
@@ -108,6 +116,10 @@ class GoogleSignInActivity : AppCompatActivity() {
 //            output.putExtra("userJSON", user.toJSON())
 //            setResult(RESULT_OK, output)
 //            finish()
+//            val subscriptionsIntent = SubscriptionsActivity.newIntent(this)
+//            startActivity(subscriptionsIntent)
+            val intent = Intent(this, SubscriptionsActivity::class.java).apply {}
+            startActivity(intent)
 
         } catch (e: ApiException) {
             // The ApiException status code indicates the detailed failure reason.
@@ -128,24 +140,26 @@ class GoogleSignInActivity : AppCompatActivity() {
                     val db = DatabaseFirebase()
                     // Sign in success, update UI with the signed-in user's information
                     val firebaseUser = FirebaseAuth.getInstance().currentUser
-                    db.getUser(firebaseUser!!.uid)
-                        .addOnCompleteListener(OnCompleteListener<Any> { task ->
-                            if (task.isSuccessful) {
-//                                if (task.result.isEmpty()) {
-//                                    val intent = Intent(
-//                                        baseContext,
-//                                        CompleteAccountDataActivity::class.java
-//                                    )
-//                                    startActivityForResult(intent, RC_COMPLETE_ACCOUNT_DATA)
-//                                } else {
-//                                    val intent = Intent(baseContext, MainActivity::class.java)
-//                                    startActivity(intent)
-//                                    finish() // destroy this activity, it's not needed anymore
-//                                }
-                            } else {
-                                Log.d("", "Error getting documents: ", task.exception)
-                            }
-                        })
+                    Log.d("", "current user!!! = ")
+                    Log.d("", firebaseUser!!.uid)
+//                    db.getUser(firebaseUser!!.uid)
+//                        .addOnCompleteListener(OnCompleteListener<Any> { task ->
+//                            if (task.isSuccessful) {
+////                                if (task.result.isEmpty()) {
+////                                    val intent = Intent(
+////                                        baseContext,
+////                                        CompleteAccountDataActivity::class.java
+////                                    )
+////                                    startActivityForResult(intent, RC_COMPLETE_ACCOUNT_DATA)
+////                                } else {
+////                                    val intent = Intent(baseContext, MainActivity::class.java)
+////                                    startActivity(intent)
+////                                    finish() // destroy this activity, it's not needed anymore
+////                                }
+//                            } else {
+//                                Log.d("", "Error getting documents: ", task.exception)
+//                            }
+//                        })
 
 
                     // activity for completing user info
