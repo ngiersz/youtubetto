@@ -49,7 +49,12 @@ class MainActivity : AppCompatActivity() {
                     { response ->
                         val items : JSONArray = response.getJSONArray("items")
 
+//                        val videoTitles = ArrayList<String>()
                         val videoTitles = arrayOfNulls<String>(items.length())
+//                        for (i in videoTitles) {
+//                            val snippet : JSONObject = items.getJSONObject(i).getJSONObject("snippet")
+//
+//                        }
                         for (i in 0 until items.length()) {
                             val snippet : JSONObject = items.getJSONObject(i).getJSONObject("snippet")
                             val title : String = snippet.getString("title")

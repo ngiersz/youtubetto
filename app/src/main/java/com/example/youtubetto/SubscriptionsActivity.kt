@@ -15,12 +15,15 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.firestore.QuerySnapshot
+import org.json.JSONArray
 
 class SubscriptionsActivity : AppCompatActivity() {
 
 //    private lateinit var binding: ActivitySubscriptionsBinding
     private var youtube_api_key: String = BuildConfig.YOUTUBE_API_KEY
     private val channel_id = "UCR04zW5-H3cUJ63KzGzFTgw"
+    private val auth_token = "ya29.A0ARrdaM8kB3eDDPGZncGJZeE0k42mnju1X209CG2QX54l73YCX8Qam31ahbwsnFizyJx8oXqXGGM2ApdmS6BNpSfYf6ea-ZR7cTuRvWHSUHfeP2-yMB-N6KTgqdon_k1B0L6209GUEdDR-KVkRXAXynumMuqd"
+    val number_of_subscribed_channels_chunks = 7
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +33,7 @@ class SubscriptionsActivity : AppCompatActivity() {
         val textView = findViewById<TextView>(R.id.text)
 
         val queue = Volley.newRequestQueue(this)
-        val subscribed_channels_url = "https://www.googleapis.com/youtube/v3/subscriptions?mine=true&part=snippet"
+        val subscribed_channels_url = "https://www.googleapis.com/youtube/v3/subscriptions?mine=true&part=snippet&maxResults=50"
 
         val jsonObjectRequest = object: JsonObjectRequest(
             Request.Method.GET, subscribed_channels_url, null,
@@ -41,7 +44,29 @@ class SubscriptionsActivity : AppCompatActivity() {
 //                val playlistTitle : String = items.getJSONObject(0).getJSONObject("snippet").getJSONObject("localized").getString("title")
 //                val channelTitle : String = items.getJSONObject(0).getJSONObject("snippet").getString("channelTitle")
 //                textView.text = "Filmy z playlisty: " + playlistTitle + ", kanał: " + channelTitle
-                textView.text = response.toString()
+
+//                SUBSKRYBOWANE KANAŁY:
+                val items : JSONArray = response.getJSONArray("items")
+                var subscribedChannelIds = ArrayList<String>()
+
+                for (i in 0 until items.length()) {
+                    val id : String = items.getJSONObject(i).getString("id")
+                    subscribedChannelIds.add(id)
+                    println(items.getJSONObject(i).getJSONObject("snippet").getString("title"))
+                }
+//                divide to 7 chunks
+                val number_of_subscribed_channels = subscribedChannelIds.size
+                val standard_chunk_length = number_of_subscribed_channels / number_of_subscribed_channels_chunks
+                var chunked_subscribed_channels = subscribedChannelIds.chunked(standard_chunk_length).toMutableList()
+
+
+                println(chunked_subscribed_channels.joinToString(", "))
+
+                val adapter = ArrayAdapter(
+            this,
+                    android.R.layout.simple_list_item_1, chunked_subscribed_channels.first()
+                )
+                listView.adapter = adapter
 
 //                val jsonObjectRequestVideos = JsonObjectRequest(
 //                    Request.Method.GET, "https://www.googleapis.com/youtube/v3/playlistItems?key=${youtube_api_key}&playlistId=${playlistId}&part=snippet", null,
@@ -81,7 +106,8 @@ class SubscriptionsActivity : AppCompatActivity() {
             },
             { textView.text = "That didn't work!" }) {
             override fun getHeaders(): MutableMap<String, String> {
-                val accessToken = getAccessToken()
+//                val accessToken = getAccessToken()
+                val accessToken = auth_token
                 val headers = HashMap<String, String>()
                 headers["Authorization"] = "Bearer " + accessToken
                 Log.d("", headers.toString())
