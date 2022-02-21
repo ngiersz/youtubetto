@@ -5,6 +5,29 @@
     android:gravity="center_horizontal"
     android:background="@color/browser_actions_bg_grey">
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="YouTubetto"
+        android:textStyle="bold"
+        android:textSize="34sp"
+        android:padding="20dp"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lighter YouTube"
+        android:textSize="20sp"
+        android:padding="10dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Without distractions"
+        android:textSize="20sp"
+        android:padding="10dp"/>
+
     <Button
         android:id="@+id/go_to_sign_in_button"
         android:layout_width="wrap_content"
@@ -12,15 +35,15 @@
         android:layout_margin="50dp"
         android:text="Sign in" />
 
-    <TextView
-        android:id="@+id/text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="test" />
+<!--    <TextView-->
+<!--        android:id="@+id/text"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="test" />-->
 
-    <ListView
-        android:id="@+id/videos_list"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+<!--    <ListView-->
+<!--        android:id="@+id/videos_list"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent" />-->
 
 </LinearLayout>
