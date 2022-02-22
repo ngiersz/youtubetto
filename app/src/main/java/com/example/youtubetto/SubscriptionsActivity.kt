@@ -16,13 +16,18 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.firestore.QuerySnapshot
 import org.json.JSONArray
+import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 class SubscriptionsActivity : AppCompatActivity() {
 
 //    private lateinit var binding: ActivitySubscriptionsBinding
     private var youtube_api_key: String = BuildConfig.YOUTUBE_API_KEY
     private val channel_id = "UCR04zW5-H3cUJ63KzGzFTgw"
-    private val auth_token = "ya29.A0ARrdaM8kB3eDDPGZncGJZeE0k42mnju1X209CG2QX54l73YCX8Qam31ahbwsnFizyJx8oXqXGGM2ApdmS6BNpSfYf6ea-ZR7cTuRvWHSUHfeP2-yMB-N6KTgqdon_k1B0L6209GUEdDR-KVkRXAXynumMuqd"
+    private val auth_token = "ya29.A0ARrdaM_Fh8xxbPkPnJSGmlWceNSZP34Wq13IvlpbbWWoZVy_E-H_f1rwfjUZIm2mOceepWHhmcNDP2mPpchvufEUNZ_AikqVu8hIsNpO274-i0V3vhYAcinxlnJ8ri8Nv4qp1hsD4Il2RfVyRnrH7SCu4AKH"
     val number_of_subscribed_channels_chunks = 7
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,28 +52,56 @@ class SubscriptionsActivity : AppCompatActivity() {
 
 //                SUBSKRYBOWANE KANAŁY:
                 val items : JSONArray = response.getJSONArray("items")
-                var subscribedChannelIds = ArrayList<String>()
+                var subscribedChannels = ArrayList<JSONObject>()
 
                 for (i in 0 until items.length()) {
-                    val id : String = items.getJSONObject(i).getString("id")
-                    subscribedChannelIds.add(id)
-                    println(items.getJSONObject(i).getJSONObject("snippet").getString("title"))
+                    subscribedChannels.add(items.getJSONObject(i).getJSONObject("snippet"))
+//                    println(items.getJSONObject(i).getJSONObject("snippet").getString("title"))
                 }
 //                divide to 7 chunks
-                val number_of_subscribed_channels = subscribedChannelIds.size
+                val number_of_subscribed_channels = subscribedChannels.size
                 val standard_chunk_length = number_of_subscribed_channels / number_of_subscribed_channels_chunks
-                var chunked_subscribed_channels = subscribedChannelIds.chunked(standard_chunk_length).toMutableList()
+                var chunked_subscribed_channels = subscribedChannels.chunked(standard_chunk_length).toMutableList()
 
 
-                println(chunked_subscribed_channels.joinToString(", "))
+                for (i in 0 until chunked_subscribed_channels.size) {
+                    println(chunked_subscribed_channels[i].toString())
+//                    subscribedChannels.add(items.getJSONObject(i))
+//                    println(items.getJSONObject(i).getJSONObject("snippet").getString("title"))
+                }
+
+                var firstChunkChannelTitles = ArrayList<String>()
+                var firstChunkChannels = ArrayList<JSONObject>()
+                for (i in 0 until chunked_subscribed_channels.first().size) {
+                    firstChunkChannelTitles.add(chunked_subscribed_channels[0][i].getString("title"))
+                    firstChunkChannels.add(chunked_subscribed_channels[0][i])
+                }
+
+//                GET VIDEOS FOR TODAY
+                val publishedAfterTimestamp = getPublishedAfterTimestamp()
+                println(publishedAfterTimestamp)
+
+                var videosRequestUrls = ArrayList<String>()
+                for (i in 0 until firstChunkChannels.size) {
+                    val channelId : String = firstChunkChannels[i].getJSONObject("resourceId").getString("channelId")
+                    videosRequestUrls.add("https://youtube.googleapis.com/youtube/v3/search?channelId=${channelId}&part=snippet,id&order=date&publishedAfter=${publishedAfterTimestamp}")
+                }
+                println(videosRequestUrls.joinToString(", "))
+
+                for (i in 0 until videosRequestUrls.size) {
+//                run request
+//                    add result to
+                }
 
                 val adapter = ArrayAdapter(
             this,
-                    android.R.layout.simple_list_item_1, chunked_subscribed_channels.first()
+                    android.R.layout.simple_list_item_1, firstChunkChannelTitles
                 )
                 listView.adapter = adapter
 
 //                val jsonObjectRequestVideos = JsonObjectRequest(
+//                https://www.googleapis.com/youtube/v3/search?key={your_key_here}&channelId={channel_id_here}&part=snippet,id&order=date&maxResults=20
+
 //                    Request.Method.GET, "https://www.googleapis.com/youtube/v3/playlistItems?key=${youtube_api_key}&playlistId=${playlistId}&part=snippet", null,
 //                    { response ->
 //                        val items : JSONArray = response.getJSONArray("items")
@@ -162,5 +195,16 @@ class SubscriptionsActivity : AppCompatActivity() {
 ////                    "ya29.A0ARrdaM-uGGGQJBuZI2cNCtmH6w5WGzTe4QXkthoBBM_ThJLXi0qDq0tn6KAFOFc3Q6Xjoe2K2LjhUKDh63hM2TkQe4X1lPiEABlGPCe15yOLUAZ4-m3NSBcjhABDTVzmDAi_0rjcy2fgOD1xfxDRoeYvGRda"
 //return user
         return user?.idToken
+    }
+
+    fun getPublishedAfterTimestamp(): String {
+        val timeZone = TimeZone.getTimeZone("UTC")
+        val calendar = Calendar.getInstance(timeZone)
+        calendar.add(Calendar.DAY_OF_YEAR, -7)
+
+        val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.GERMAN)
+
+        simpleDateFormat.timeZone = timeZone
+        return simpleDateFormat.format(calendar.getTime()) + "Z"
     }
 }
