@@ -13,8 +13,10 @@ import com.android.volley.toolbox.Volley
 import org.json.JSONArray
 import org.json.JSONObject
 import android.widget.TextView
+import androidx.lifecycle.lifecycleScope
 import com.android.volley.RequestQueue
 import com.android.volley.Response
+import com.android.volley.toolbox.JsonArrayRequest
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -26,10 +28,27 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.suspendCancellableCoroutine
+import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import kotlinx.coroutines.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import retrofit2.Call
+import retrofit2.Retrofit
+import retrofit2.http.GET
+import retrofit2.http.Path
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReferenceArray
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
+import com.android.volley.toolbox.RequestFuture
+import java.util.concurrent.ExecutionException
 
-class MainActivity : AppCompatActivity() {
+
+class MainActivity : AppCompatActivity(), CoroutineScope {
     private val RC_SIGN_IN = 1
     private val channel_id = "UC9jAyy-X65QOVZpyGu9AKHw"
 
@@ -40,24 +59,24 @@ class MainActivity : AppCompatActivity() {
 //    private val br: BroadcastReceiver? = null
     private lateinit var auth: FirebaseAuth
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    protected lateinit var job: Job
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
+
+    override fun onCreate(savedInstanceState: Bundle?)  {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_main)
+//        val queue = Volley.newRequestQueue(this)
 
 //        BEGIN CONCURRENCY TEST
-        var queueTest = Volley.newRequestQueue(this) // 2
-        launch(UI) { // 3
-            val result = data(queueTest, "https://jsonplaceholder.typicode.com/posts/1")
-            val result2 = data(queueTest, "https://jsonplaceholder.typicode.com/posts/2")
-            val result3 = data(queueTest, "https://jsonplaceholder.typicode.com/posts/3")
-            val result4 = data(queueTest, "https://jsonplaceholder.typicode.com/posts/4")
-            val textToShow = result.await().toString() + "|||" +
-                    result2.await().toString() + "|||" +
-                    result3.await().toString() + "|||" +
-                    result4.await().toString()
-            println(textToShow)
-        }
+//        job = Job()
+
+//        println("1")
+//        test(queue)
+//        start()
+
+//        println("2")
 //        END CONCURRENCY TEST
 
 //        val buttonView = findViewById<Button>(R.id.go_to_sign_in_button)
@@ -91,7 +110,7 @@ class MainActivity : AppCompatActivity() {
 
 //        val listView : ListView = findViewById(R.id.videos_list);
 
-        val queue = Volley.newRequestQueue(this)
+//        val queue = Volley.newRequestQueue(this)
         val url = "https://www.googleapis.com/youtube/v3/playlists?key=${youtube_api_key}&channelId=${channel_id}&part=snippet"
 
 //        buttonView.setOnClickListener {_ ->
@@ -249,22 +268,132 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    // BEGIN CONCURRENCY TEST
-    fun data(queue: RequestQueue?, url: String) = async(CommonPool) { readData(queue, url) }
+//    fun test() {
+//        println("hi")
+//    }
 
-    //2
-    suspend fun readData(queue: RequestQueue?, url: String): JSONObject = suspendCancellableCoroutine { continuation ->
-// 3
-        val request = JsonObjectRequest(url, null, Response.Listener {
-            println("$url DONE")
-            continuation.resume(it)
-        }, // 4
-            Response.ErrorListener { continuation.resumeWithException(Exception(it.cause)) }) // 5
-        queue?.add(request)
-        continuation.invokeOnCompletion { // 6
-            request.cancel()
+    fun test(queue : RequestQueue) {
+//        test_coroutine(queue)
+        val playlists : ArrayList<String> = arrayListOf("PLJ8cMiYb3G5fzUHSJ5VPYwalS9gXNfZ4g", "PLJ8cMiYb3G5dAchmwTsFnuMu3xgEkQ0ra", "PLJ8cMiYb3G5eOodS2LhALq1f93cqnJqWI")
+        val results = ArrayList<JSONArray>()
+
+        for (i in 0 until playlists.size) {
+            val data = getData(queue, playlists[i])
+
         }
     }
-    // END CONCURRENCY TEST
 
+    fun test_coroutine(queue : RequestQueue) {
+        val playlists : ArrayList<String> = arrayListOf("PLJ8cMiYb3G5fzUHSJ5VPYwalS9gXNfZ4g", "PLJ8cMiYb3G5dAchmwTsFnuMu3xgEkQ0ra", "PLJ8cMiYb3G5eOodS2LhALq1f93cqnJqWI")
+        val results = ArrayList<JSONArray>()
+//        val results = AtomicReferenceArray<ArrayList<JSONArray>>(playlists.size)
+        val resultint = AtomicInteger()
+        val concurrentResult = ConcurrentHashMap<String, JSONArray>()
+
+        //for (i in 0 until playlists.size) {
+//            launch {
+//                println("before getData")
+//                val data = getData(queue, playlists[i])
+//                println("done before add " + i)
+//                results.add(data)
+//                println("done after add " + i)
+//            }
+
+        lifecycleScope.launch {
+
+            val res = async { getData(queue, playlists[0]) }
+            val res2 = async { getData(queue, playlists[1]) }
+            val res3 = async { getData(queue, playlists[2]) }
+
+            awaitAll(res, res2, res3)
+        }
+            //println("done awaiting" + i)
+            resultint.incrementAndGet()
+            //println("done " + i)
+        //}
+        println("results " + results)
+//        println("results int " + resultint)
+    }
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
+    }
+
+
+     fun getData(queue : RequestQueue, playlistId : String) {
+        println("getData")
+        val url = "https://www.googleapis.com/youtube/v3/playlistItems?key=${youtube_api_key}&playlistId=${playlistId}"
+        val itemsResult = ArrayList<JSONArray>()
+        var items = JSONArray()
+
+        val future = RequestFuture.newFuture<JSONObject>()
+         val jsonObjectRequest = JsonObjectRequest(
+             Request.Method.GET, url, null, future, { null }
+         )
+//        val jsonObjectRequest = JsonObjectRequest(
+//            Request.Method.GET, url, null,
+//            { response ->
+//                println("got response")
+//
+//                items = response.getJSONArray("items")
+//                itemsResult.add(items)
+//                println("items" + items)
+//
+//            },
+//            { null })
+
+    }
+
+//    suspend fun run_request(playlistId : String): ArrayList<JSONArray> {
+//        val queue = Volley.newRequestQueue(this)
+//        val url = "https://www.googleapis.com/youtube/v3/playlistItems?key=${youtube_api_key}&playlistId=${playlistId}"
+//        val itemsResult = ArrayList<JSONArray>()
+//        val jsonObjectRequest = JsonObjectRequest(
+//            Request.Method.GET, url, null,
+//            { response ->
+//                val items : JSONArray = response.getJSONArray("items")
+//                itemsResult.add(items)
+//                println(items)
+//            },
+//            { null })
+//
+//        queue.add(jsonObjectRequest)
+//
+//        println("itemsResult" + itemsResult)
+//        return itemsResult
+//    }
+//
+//    suspend fun run_world(attr : Int): Int {
+//        delay(1000L) // non-blocking delay for 1 second (default time unit is ms)
+////        println("attr: " + attr) // print after delay
+//        return attr.times(attr);
+//    }
+
+    interface YouTubeService {
+        @GET("/v3/playlistItems?key=AIzaSyC1SANnxQFJs8mv4Yqo1djkWZqUL3gB-7g&playlistId=PLJ8cMiYb3G5fzUHSJ5VPYwalS9gXNfZ4g")
+        fun getPlaylist(): Call<Playlist>
+//        @GET("/v3/playlistItems?key={youtubeApiKey}&playlistId={playlistId}")
+//        suspend fun getPlaylist(): Call<Playlist>
+//        suspend fun getPlaylist(@Path(value = "youtubeApiKey") youtubeApiKey: String, @Path(value="playlistId") playlistId: String): Playlist
+    }
+
+
+
+    fun start() {
+        val contentType = "application/json".toMediaType()
+        val youtubeService by lazy {
+            Retrofit.Builder()
+                .baseUrl("https://www.googleapis.com/youtube/")
+                .addConverterFactory(Json.asConverterFactory(contentType))
+                .build().create(YouTubeService::class.java)
+        }
+
+        val playlist =  youtubeService.getPlaylist()
+        println(playlist.execute())
+//        lifecycleScope.launch {
+//            var playlist =  youtubeService.getPlaylist()
+////            var playlist =  youtubeService.getPlaylist(youtubeApiKey = "AIzaSyC1SANnxQFJs8mv4Yqo1djkWZqUL3gB-7g", playlistId = "PLJ8cMiYb3G5fzUHSJ5VPYwalS9gXNfZ4g")
+//            println("playlist: "+ playlist.execute())
+//        }
+    }
 }
